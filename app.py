@@ -104,11 +104,12 @@ hr { border-color: rgba(255,255,255,0.1) !important; }
 
 @st.cache_data
 def load_data():
-    sheets = {"Per 100g": "100g", "Per 100ml": "100ml", "Per 250ml": "250ml"}
+    # Per 100g: nutrients start at column index 4; CWYE Per Serving: nutrients start at 6
+    sheet_config = {"Per 100g": ("100g", 4), "CWYE Per Serving": ("serving", 6)}
     all_data = {}
-    for sheet_name, label in sheets.items():
-        df = pd.read_excel("Nutrition_Final.xlsx", sheet_name=sheet_name)
-        nutrient_cols = df.columns[3:]
+    for sheet_name, (label, nutrient_start) in sheet_config.items():
+        df = pd.read_excel("Nutrition Final excel sheet.xlsx", sheet_name=sheet_name)
+        nutrient_cols = df.columns[nutrient_start:]
         df = df[df[nutrient_cols].notnull().any(axis=1)].copy()
         df = df.rename(columns={"Survey Food Item": "Food"})
         df = df.reset_index(drop=True)
@@ -139,7 +140,7 @@ PLOTLY_LAYOUT = dict(
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 
 st.sidebar.markdown("## ⚙️ Settings")
-serving = st.sidebar.radio("Serving size", ["100g", "100ml", "250ml"])
+serving = st.sidebar.radio("View", ["100g", "serving"], format_func=lambda x: "Per 100g" if x == "100g" else "CWYE Per Serving")
 df = data[serving]
 food_list = sorted(df["Food"].dropna().unique().tolist())
 
@@ -147,7 +148,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 📊 Dataset Overview")
 st.sidebar.markdown(f"- **{len(food_list)} foods** tracked")
 st.sidebar.markdown(f"- **{len(NUTRIENTS)} nutrients** per food")
-st.sidebar.markdown("- Source: USDA · IFCT · RecipeDB")
+st.sidebar.markdown("- Source: INDB · CWYE · IFCT")
 st.sidebar.markdown("- Region: South Karnataka")
 
 # ── Hero Banner ────────────────────────────────────────────────────────────────
